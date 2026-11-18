@@ -15,7 +15,7 @@
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -24,3 +24,10 @@ const here = dirname(fileURLToPath(import.meta.url));
 
 mkdirSync(outDir, { recursive: true });
 copyFileSync(join(here, 'entry.png'), join(outDir, 'entry.png'));
+
+// Verify the copy: read the written file back and byte-compare it with the
+// source, so a partial or failed copy can never silently pass as a valid
+// entry — the grader would otherwise score a truncated image as 0.
+if (!readFileSync(join(outDir, 'entry.png')).equals(readFileSync(join(here, 'entry.png')))) {
+  throw new Error('entry.png copy mismatch: output differs from source');
+}
